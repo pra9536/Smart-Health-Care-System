@@ -48,13 +48,28 @@ const BookAppointment = () => {
     setCardInfo({ ...cardInfo, [e.target.name]: e.target.value });
   };
 
-  const startCheckout = (e) => {
+  const startCheckout = async (e) => {
     e.preventDefault();
     if (!form.appointmentDate || !form.appointmentTime || !form.symptoms) {
       toast.error("Please fill all details!");
       return;
     }
-    setStep("checkout");
+    try {
+      const res = await axiosInstance.get("/appointments/check-slot", {
+        params: {
+          doctorId: doctorId,
+          date: form.appointmentDate,
+          time: form.appointmentTime
+        }
+      });
+      if (res.data.booked) {
+        toast.error("This slot is already booked for this doctor. Please choose a different date or time.");
+        return;
+      }
+      setStep("checkout");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Error checking slot availability.");
+    }
   };
 
   const processSimulatedPayment = async () => {

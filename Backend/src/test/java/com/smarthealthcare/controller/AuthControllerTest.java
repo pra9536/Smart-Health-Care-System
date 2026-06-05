@@ -81,6 +81,8 @@ public class AuthControllerTest {
         testUser.setRole(User.Role.PATIENT);
         testUser.setVerified(false);
         testUser.setActive(true);
+        
+        when(otpService.sendOtp(any())).thenReturn("123456");
     }
 
     @Test

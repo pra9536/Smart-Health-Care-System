@@ -10,6 +10,8 @@ import com.smarthealthcare.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -24,8 +26,31 @@ public class AppointmentService {
 
     private final UserRepository userRepository;
 
+    public boolean isSlotBooked(Long doctorId, String date, String time) {
+        Doctor doctor = doctorService.getDoctorById(doctorId);
+        LocalDate localDate = LocalDate.parse(date);
+        LocalTime localTime = LocalTime.parse(time);
+        return appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusNot(
+                doctor,
+                localDate,
+                localTime,
+                Appointment.Status.CANCELLED
+        );
+    }
+
     public Appointment bookAppointment(AppointmentRequest request, Patient patient){
         Doctor doctor = doctorService.getDoctorById(request.getDoctorId());
+
+        boolean isAlreadyBooked = appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusNot(
+                doctor,
+                request.getAppointmentDate(),
+                request.getAppointmentTime(),
+                Appointment.Status.CANCELLED
+        );
+
+        if (isAlreadyBooked) {
+            throw new RuntimeException("This slot is already booked for this doctor. Please choose a different date or time.");
+        }
 
         Appointment appointment = new Appointment();
 
@@ -34,7 +59,7 @@ public class AppointmentService {
         appointment.setAppointmentDate(request.getAppointmentDate());
         appointment.setAppointmentTime(request.getAppointmentTime());
         appointment.setSymptoms(request.getSymtoms());
-        appointment.setSymptoms(String.valueOf(Appointment.Status.PENDING));
+        appointment.setStatus(Appointment.Status.PENDING);
 
         Appointment saved = appointmentRepository.save(appointment);
 

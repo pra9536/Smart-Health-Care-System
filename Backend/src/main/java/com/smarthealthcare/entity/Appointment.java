@@ -10,7 +10,9 @@ import java.time.LocalTime;
 
 
 @Entity
-@Table(name = "appointments")
+@Table(name = "appointments", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"doctor_id", "appointment_date", "appointment_time"})
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

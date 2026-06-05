@@ -45,6 +45,17 @@ public class AppointmentController {
         return ResponseEntity.ok(appointment);
     }
 
+    @GetMapping("/check-slot")
+    @PreAuthorize("hasRole('PATIENT')")
+    public ResponseEntity<?> checkSlot(
+            @RequestParam Long doctorId,
+            @RequestParam String date,
+            @RequestParam String time
+    ) {
+        boolean booked = appointmentService.isSlotBooked(doctorId, date, time);
+        return ResponseEntity.ok(java.util.Map.of("booked", booked));
+    }
+
     @GetMapping("/my")
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<List<Appointment>> getMyAppointments(
