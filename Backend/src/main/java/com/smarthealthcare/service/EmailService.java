@@ -1,39 +1,82 @@
 package com.smarthealthcare.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import jakarta.mail.MessagingException;
+import org.springframework.web.client.RestTemplate;
 import jakarta.mail.internet.MimeMessage;
+
+import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    @Value("${app.mail.api-key:}")
+    private String apiKey;
+
+    @Value("${spring.mail.username}")
+    private String senderEmail;
 
     // ===== Send simple plain text email =====
     public void sendSimpleEmail(String to, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(body);
-        mailSender.send(message);
+        if (apiKey != null && !apiKey.trim().isEmpty()) {
+            sendHtmlEmail(to, subject, body);
+        } else {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+        }
     }
 
     // ===== Send HTML email =====
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true); // true = HTML
-            mailSender.send(message);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to send email: " + e.getMessage());
+        if (apiKey != null && !apiKey.trim().isEmpty()) {
+            // Send via Brevo HTTP API (Bypasses SMTP port blocking on Render)
+            String url = "https://api.brevo.com/v3/smtp/email";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("api-key", apiKey.trim());
+
+            Map<String, Object> request = Map.of(
+                    "sender", Map.of("name", "Smart Health Care", "email", senderEmail),
+                    "to", List.of(Map.of("email", to)),
+                    "subject", subject,
+                    "htmlContent", htmlBody
+            );
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+
+            try {
+                restTemplate.postForEntity(url, entity, String.class);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to send email via Brevo HTTP API: " + e.getMessage(), e);
+            }
+        } else {
+            // Fallback to SMTP (Local environment)
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true);
+                helper.setTo(to);
+                helper.setSubject(subject);
+                helper.setText(htmlBody, true); // true = HTML
+                mailSender.send(message);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to send email via SMTP: " + e.getMessage(), e);
+            }
         }
     }
 
