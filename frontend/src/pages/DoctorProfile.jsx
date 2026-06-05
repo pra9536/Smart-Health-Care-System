@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axiosInstance from "../api/axiosInstance";
-import { useAuth } from "../context/AuthContext";
+
 
 const DoctorProfile = () => {
   const navigate = useNavigate();
