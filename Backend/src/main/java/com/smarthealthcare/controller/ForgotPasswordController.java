@@ -4,6 +4,7 @@ import com.smarthealthcare.entity.User;
 import com.smarthealthcare.repository.UserRepository;
 import com.smarthealthcare.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,9 @@ public class ForgotPasswordController {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     // ===== STEP 1 — Send reset link =====
     @PostMapping("/forgot-password")
@@ -52,8 +56,7 @@ public class ForgotPasswordController {
         userRepository.save(user);
 
         // Send email with reset link
-        String resetLink = "http://localhost:3000" +
-                "/reset-password?token=" + token;
+        String resetLink = frontendUrl + "/reset-password?token=" + token;
 
         String html = """
             <div style="font-family: Arial, sans-serif;
@@ -104,12 +107,14 @@ public class ForgotPasswordController {
             </div>
             """.formatted(user.getName(), resetLink);
 
+        boolean emailSent = false;
         try {
             emailService.sendHtmlEmail(
                     email,
                     "🔐 Reset Your Password — HealthCare",
                     html
             );
+            emailSent = true;
         } catch (Exception e) {
             System.err.println("[SMTP FAILURE] Could not send reset link email to " + email + " due to SMTP configuration. Falling back to console logging.");
             System.err.println("SMTP Exception Details: " + e.getMessage());
@@ -119,11 +124,18 @@ public class ForgotPasswordController {
             System.out.println("=================================================\n");
         }
 
-        return ResponseEntity.ok(Map.of(
-                "message",
-                "Password reset link sent to your email!",
-                "debugToken", token
-        ));
+        if (emailSent) {
+            return ResponseEntity.ok(Map.of(
+                    "message",
+                    "Password reset link sent to your email!"
+            ));
+        } else {
+            return ResponseEntity.ok(Map.of(
+                    "message",
+                    "Password reset link sent to your email!",
+                    "debugToken", token
+            ));
+        }
     }
 
     // ===== STEP 2 — Verify token =====
