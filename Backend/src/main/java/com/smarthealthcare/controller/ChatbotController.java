@@ -122,7 +122,36 @@ public class ChatbotController {
     }
 
     private String getLocalFallbackResponse(String userQuery, String apiErrorMsg) {
-        String query = userQuery != null ? userQuery.toLowerCase() : "";
+        String query = userQuery != null ? userQuery.trim().toLowerCase() : "";
+        
+        // Clean up error message for display
+        String shortError = apiErrorMsg;
+        if (apiErrorMsg != null && apiErrorMsg.contains("\"message\":\"")) {
+            try {
+                int start = apiErrorMsg.indexOf("\"message\":\"") + 11;
+                int end = apiErrorMsg.indexOf("\"", start);
+                if (end > start) {
+                    shortError = apiErrorMsg.substring(start, end);
+                }
+            } catch (Exception ignored) {}
+        } else if (apiErrorMsg != null && apiErrorMsg.length() > 80) {
+            shortError = apiErrorMsg.substring(0, 80) + "...";
+        }
+
+        // Check for greetings and conversational inquiries
+        if (query.equals("hi") || query.equals("hello") || query.equals("hey") || query.equals("hlw") || 
+            query.equals("hey there") || query.equals("greetings") || query.contains("good morning") || 
+            query.contains("good afternoon") || query.contains("good evening") || query.startsWith("hi ") || 
+            query.startsWith("hello ") || query.equals("help") || query.equals("who are you")) {
+            return String.format(
+                "🏥 **AI Health Assistant (Local Triage Mode)**\n\n" +
+                "Hello! How can I help you today?\n\n" +
+                "Please describe the symptoms you are experiencing (for example: *fever*, *cough*, *chest pain*, *headache*, or *skin rash*), and I will help recommend the right doctor specialization and offer some simple health tips.\n\n" +
+                "*⚠️ Disclaimer: The Anthropic AI service is currently offline (Error: **%s**). Running in local fallback mode. Always consult a real doctor for any medical diagnosis.*",
+                shortError
+            );
+        }
+
         String specialization = "General Medicine";
         String tip = "Stay hydrated, get plenty of rest, and monitor your symptoms. If they persist or worsen, please consult a healthcare professional.";
         
@@ -156,20 +185,6 @@ public class ChatbotController {
         } else if (query.contains("fever") || query.contains("cough") || query.contains("cold") || query.contains("flu") || query.contains("stomach")) {
             specialization = "General Medicine";
             tip = "Get plenty of rest, stay well-hydrated, eat light and easily digestible meals, and monitor your temperature.";
-        }
-
-        // Clean up error message for display
-        String shortError = apiErrorMsg;
-        if (apiErrorMsg != null && apiErrorMsg.contains("\"message\":\"")) {
-            try {
-                int start = apiErrorMsg.indexOf("\"message\":\"") + 11;
-                int end = apiErrorMsg.indexOf("\"", start);
-                if (end > start) {
-                    shortError = apiErrorMsg.substring(start, end);
-                }
-            } catch (Exception ignored) {}
-        } else if (apiErrorMsg != null && apiErrorMsg.length() > 80) {
-            shortError = apiErrorMsg.substring(0, 80) + "...";
         }
 
         return String.format(
