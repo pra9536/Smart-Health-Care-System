@@ -143,13 +143,8 @@ public class ChatbotController {
             query.equals("hey there") || query.equals("greetings") || query.contains("good morning") || 
             query.contains("good afternoon") || query.contains("good evening") || query.startsWith("hi ") || 
             query.startsWith("hello ") || query.equals("help") || query.equals("who are you")) {
-            return String.format(
-                "🏥 **AI Health Assistant (Local Triage Mode)**\n\n" +
-                "Hello! How can I help you today?\n\n" +
-                "Please describe the symptoms you are experiencing (for example: *fever*, *cough*, *chest pain*, *headache*, or *skin rash*), and I will help recommend the right doctor specialization and offer some simple health tips.\n\n" +
-                "*⚠️ Disclaimer: The Anthropic AI service is currently offline (Error: **%s**). Running in local fallback mode. Always consult a real doctor for any medical diagnosis.*",
-                shortError
-            );
+            return "Hello! How can I help you today?\n\n" +
+                   "Please describe the symptoms you are experiencing (for example: *fever*, *cough*, *chest pain*, *headache*, or *skin rash*), and I will help recommend the right doctor specialization and offer some simple health tips.";
         }
 
         String specialization = "General Medicine";
@@ -188,14 +183,11 @@ public class ChatbotController {
         }
 
         return String.format(
-            "🏥 **AI Health Assistant (Local Diagnostic Mode)**\n\n" +
-            "*Note: The Anthropic AI service is currently unavailable (Error: **%s**). Local fallback mode has been activated to assist you.*\n\n" +
             "Based on your described symptoms, here is some guidance:\n" +
             "* **Suggested Specialization:** **%s**\n" +
             "* **General Health Tip:** %s\n\n" +
-            "**Recommended Action:** Please use our 'Find Doctors' page to locate a specialist in **%s** and book an appointment.\n\n" +
-            "*⚠️ Disclaimer: This is an automated keyword-based fallback system. Always consult a registered medical professional for proper diagnosis and treatment.*",
-            shortError, specialization, tip, specialization
+            "**Recommended Action:** Please use our 'Find Doctors' page to locate a specialist in **%s** and book an appointment.",
+            specialization, tip, specialization
         );
     }
 }

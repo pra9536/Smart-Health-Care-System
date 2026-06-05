@@ -102,6 +102,6 @@ public class ChatbotControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reply").value(org.hamcrest.Matchers.containsString("Diagnostic Mode")));
+                .andExpect(jsonPath("$.reply").value(org.hamcrest.Matchers.containsString("Suggested Specialization:")));
     }
 }
