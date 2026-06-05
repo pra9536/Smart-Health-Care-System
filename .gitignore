@@ -1,0 +1,31 @@
+# Ignore Node dependencies
+node_modules/
+frontend/node_modules/
+frontend/build/
+frontend/.dist/
+.npm
+npm-debug.log*
+
+# Ignore Maven build output
+target/
+Backend/target/
+
+# Ignore IDE and editor configurations
+.idea/
+.vscode/
+*.iml
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore local JVM and crash logs
+*.log
+Backend/*.log
+Backend/hs_err_pid*.log
+Backend/replay_pid*.log

@@ -1,0 +1,140 @@
+# ===================================================
+# SMART HEALTHCARE MANAGEMENT SYSTEM
+# .gitignore — DO NOT REMOVE ANY LINE FROM THIS FILE
+# ===================================================
+
+
+# ===== 🔴 SECRET FILES — NEVER PUSH TO GITHUB =====
+src/main/resources/application.properties
+src/main/resources/application-prod.properties
+src/main/resources/application-local.properties
+*.env
+.env
+secrets/
+config/secrets/
+
+
+# ===== MAVEN BUILD FILES =====
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+
+# ===== INTELLIJ IDEA =====
+.idea
+*.iws
+*.iml
+*.ipr
+*.idea/
+out/
+
+
+# ===== SPRING TOOL SUITE (STS) =====
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+
+# ===== NETBEANS =====
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+
+# ===== VS CODE =====
+.vscode/
+
+
+# ===== JAVA COMPILED FILES =====
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+
+# ===== LOGS =====
+*.log
+logs/
+log/
+spring.log
+
+
+# ===== OS FILES =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+
+# ===== DATABASE FILES =====
+*.sql.bak
+*.db
+*.sqlite
+
+
+# ===== DOCKER =====
+# Keep Dockerfile and docker-compose.yml
+# But ignore local override files
+docker-compose.override.yml
+.docker/
+
+
+# ===== NODE MODULES (if any frontend in same repo) =====
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+# ===== REACT BUILD (if frontend in same repo) =====
+/frontend/build/
+/frontend/.env
+/frontend/.env.local
+/frontend/.env.production
+
+
+# ===== CERTIFICATE FILES =====
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+*.truststore
+
+
+# ===== BACKUP FILES =====
+*.bak
+*.backup
+*.tmp
+*.temp
+*~
+
+# ===== SECRET FILES =====
+src/main/resources/application.properties
+extracted/
+
+# ===== BUILD FILES =====
+target/
+extracted/
+*.jar
+*.war
+
+# ===== LOGS =====
+*.log
