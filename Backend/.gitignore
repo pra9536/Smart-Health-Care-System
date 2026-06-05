@@ -5,7 +5,6 @@
 
 
 # ===== 🔴 SECRET FILES — NEVER PUSH TO GITHUB =====
-src/main/resources/application.properties
 src/main/resources/application-prod.properties
 src/main/resources/application-local.properties
 *.env
@@ -127,7 +126,6 @@ yarn-error.log*
 *~
 
 # ===== SECRET FILES =====
-src/main/resources/application.properties
 extracted/
 
 # ===== BUILD FILES =====
