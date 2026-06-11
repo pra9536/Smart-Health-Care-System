@@ -1,3 +1,5 @@
+<img width="1919" height="990" alt="image" src="screenshots/dashboard.png" /># 💼 [SmartHealthCare: AI-Powered Clinical Console & Secure Transactional Ledger](https://smart-health-care-system-u3bv.vercel.app/doctors) 
+
 # SmartHealthCare System 🏥 — AI Clinical Console & Transactional Ledger
 
 SmartHealthCare is a state-of-the-art, enterprise-grade digital healthcare console and medical records management portal. It integrates an intelligent symptom triage chatbot fallback engine, secure role-based dashboard metrics, a highly-robust ACID-compliant **Payment Transaction Ledger** mapping simulated checkouts, and independent containerized container orchestration using Docker.
