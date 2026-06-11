@@ -73,3 +73,28 @@ Once the backend container is running, developers can browse, inspect, and test 
 ```url
 http://localhost:8081/swagger-ui/index.html
 ```
+
+
+## 📸 Screenshots
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Register Page
+![Register](screenshots/register.png)
+
+### Login Page
+![Login](screenshots/login.png)
+
+### Reset Password
+![Reset Password](screenshots/reset_password.png)
+
+### Welcome Page
+![Welcome Page](screenshots/patient_welcome_page.png)
+
+### Chat Bot
+![AI Assistant](screenshots/ai_assistant.png)
+
+### Book Appointment
+![Book Appointment](screenshots/book_appointment_page.png)
+
