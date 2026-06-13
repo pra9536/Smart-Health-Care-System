@@ -28,6 +28,9 @@ services:
       spring.datasource.password: Prateek1234@+
       jwt.secret: mySecretKey12345678901234567890AB
       jwt.expiration: 86400000
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     depends_on:
       mysql:
         condition: service_healthy

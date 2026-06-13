@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -27,6 +28,9 @@ public class ForgotPasswordController {
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
+
+    @Value("${app.env:dev}")
+    private String appEnv;
 
     // ===== STEP 1 — Send reset link =====
     @PostMapping("/forgot-password")
@@ -116,7 +120,10 @@ public class ForgotPasswordController {
             );
             emailSent = true;
         } catch (Exception e) {
-            System.err.println("[SMTP FAILURE] Could not send reset link email to " + email + " due to SMTP configuration. Falling back to console logging.");
+            System.err.println("[SMTP FAILURE] Could not send reset link email to " + email + " due to SMTP configuration.");
+            if (!"dev".equalsIgnoreCase(appEnv)) {
+                throw new RuntimeException("Failed to send password reset email. Please check configuration.", e);
+            }
             System.err.println("SMTP Exception Details: " + e.getMessage());
             e.printStackTrace();
             System.out.println("\n=================================================");
@@ -130,11 +137,12 @@ public class ForgotPasswordController {
                     "Password reset link sent to your email!"
             ));
         } else {
-            return ResponseEntity.ok(Map.of(
-                    "message",
-                    "Password reset link sent to your email!",
-                    "debugToken", token
-            ));
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Password reset link sent to your email!");
+            if ("dev".equalsIgnoreCase(appEnv)) {
+                response.put("debugToken", token);
+            }
+            return ResponseEntity.ok(response);
         }
     }
 

@@ -15,6 +15,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -32,6 +33,9 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final OtpService otpService;
     private final AuditService auditService;
+
+    @Value("${app.env:dev}")
+    private String appEnv;
 
 
     // Step 1 - Register (sends OTP)
@@ -93,13 +97,16 @@ public class AuthController {
                 httpRequest.getRemoteAddr()
         );
 
-        return ResponseEntity.ok(Map.of(
-                "message", "OTP sent to " + request.getEmail() +
-                        ". Please verify to complete registration.",
-                "email", request.getEmail(),
-                "otpSent", true,
-                "debugOtp", debugOtp
-        ));
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "OTP sent to " + request.getEmail() +
+                ". Please verify to complete registration.");
+        response.put("email", request.getEmail());
+        response.put("otpSent", true);
+        if ("dev".equalsIgnoreCase(appEnv)) {
+            response.put("debugOtp", debugOtp);
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     // Step 2 - Verify OTP
@@ -181,10 +188,12 @@ public class AuthController {
                 "User manually requested OTP resend",
                 httpRequest.getRemoteAddr()
         );
-        return ResponseEntity.ok(Map.of(
-                "message", "New OTP sent to " + email,
-                "debugOtp", debugOtp
-        ));
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "New OTP sent to " + email);
+        if ("dev".equalsIgnoreCase(appEnv)) {
+            response.put("debugOtp", debugOtp);
+        }
+        return ResponseEntity.ok(response);
     }
 
 
@@ -219,13 +228,14 @@ public class AuthController {
                     "Login blocked - email not verified",
                     httpRequest.getRemoteAddr()
             );
-            return ResponseEntity.status(403).body(Map.of(
-                    "message", "Email not verified! " +
-                            "New OTP sent to your email.",
-                    "notVerified", true,
-                    "email", request.getEmail(),
-                    "debugOtp", debugOtp
-            ));
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Email not verified! New OTP sent to your email.");
+            response.put("notVerified", true);
+            response.put("email", request.getEmail());
+            if ("dev".equalsIgnoreCase(appEnv)) {
+                response.put("debugOtp", debugOtp);
+            }
+            return ResponseEntity.status(403).body(response);
         }
         try {
             authenticationManager.authenticate(

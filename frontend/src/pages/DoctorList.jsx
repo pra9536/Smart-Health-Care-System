@@ -37,15 +37,25 @@ const DoctorList = () => {
   const [filtered, setFiltered] = useState([]);
   const [selected, setSelected] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [showWakeUpNotice, setShowWakeUpNotice] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowWakeUpNotice(true);
+    }, 2500);
+
     axiosInstance.get("/doctors")
       .then(res => {
         setDoctors(res.data.data || []);
         setFiltered(res.data.data || []);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        clearTimeout(timer);
+        setLoading(false);
+      });
+
+    return () => clearTimeout(timer);
   }, []);
 
   const filterBySpec = (spec) => {
@@ -55,8 +65,13 @@ const DoctorList = () => {
   };
 
   if (loading) return (
-    <div className="flex justify-center items-center h-96">
+    <div className="flex flex-col justify-center items-center h-96 gap-4">
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      {showWakeUpNotice && (
+        <div className="text-slate-500 text-sm font-medium animate-pulse text-center max-w-sm px-4">
+          Waking up our secure clinical server... This may take up to a minute on the first load as our free-tier database initializes. Thank you for your patience! 🏥
+        </div>
+      )}
     </div>
   );
 

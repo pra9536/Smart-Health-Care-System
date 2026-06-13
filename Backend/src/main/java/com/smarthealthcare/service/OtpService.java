@@ -5,6 +5,7 @@ import com.smarthealthcare.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import org.springframework.beans.factory.annotation.Value;
 import java.time.LocalDateTime;
 import java.util.Random;
 
@@ -14,6 +15,9 @@ public class OtpService {
 
     private final UserRepository userRepository;
     private final EmailService emailService;
+
+    @Value("${app.env:dev}")
+    private String appEnv;
 
     // ===== Generate 6 digit OTP =====
     public String generateOtp() {
@@ -89,7 +93,10 @@ public class OtpService {
         try {
             emailService.sendHtmlEmail(user.getEmail(), subject, html);
         } catch (Exception e) {
-            System.err.println("[SMTP FAILURE] Could not send OTP email to " + user.getEmail() + " due to SMTP configuration. Falling back to console logging.");
+            System.err.println("[SMTP FAILURE] Could not send OTP email to " + user.getEmail() + " due to SMTP configuration.");
+            if (!"dev".equalsIgnoreCase(appEnv)) {
+                throw new RuntimeException("Failed to send verification email. Please check SMTP/Email configuration.", e);
+            }
             System.err.println("SMTP Exception Details: " + e.getMessage());
             e.printStackTrace();
             System.out.println("\n=================================================");
