@@ -111,3 +111,10 @@ http://localhost:8081/swagger-ui/index.html
 
 ### Book Appointment
 ![Book Appointment](screenshots/book_appointment_page.png)
+
+---
+
+## 👨‍💻 Author
+
+**Prateek Yadav**  
+Java Full Stack Developer  
