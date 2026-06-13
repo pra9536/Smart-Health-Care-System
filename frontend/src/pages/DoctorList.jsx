@@ -69,7 +69,7 @@ const DoctorList = () => {
       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       {showWakeUpNotice && (
         <div className="text-slate-500 text-sm font-medium animate-pulse text-center max-w-sm px-4">
-          Waking up our secure clinical server... This may take up to a minute on the first load as our free-tier database initializes. Thank you for your patience! 🏥
+          Waking up our secure clinical server... This may take up to a minute on the first load as our database initializes. Thank you for your patience! 🏥
         </div>
       )}
     </div>
