@@ -72,18 +72,26 @@ const BookAppointment = () => {
     }
   };
 
-  const processSimulatedPayment = async () => {
-    if (paymentMethod === "UPI" && !upiId.includes("@")) {
-      toast.error("Please enter a valid UPI ID (e.g. user@okaxis)!");
-      return;
-    }
-    if (paymentMethod === "CARD" && (cardInfo.number.length < 16 || cardInfo.cvv.length < 3)) {
-      toast.error("Please enter a valid 16-digit card number and 3-digit CVV!");
-      return;
-    }
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
 
+  const processRazorpayPayment = async () => {
     setPaymentLoading(true);
     try {
+      const resScript = await loadRazorpayScript();
+      if (!resScript) {
+        toast.error("Razorpay SDK failed to load. Are you online?");
+        setPaymentLoading(false);
+        return;
+      }
+
       // 1. Submit appointment to DB in PENDING state
       const apptRes = await axiosInstance.post("/appointments/book", {
         appointmentDate: form.appointmentDate,
@@ -94,18 +102,59 @@ const BookAppointment = () => {
 
       const appointment = apptRes.data;
 
-      // 2. Call transactional payments processing API
-      const payRes = await axiosInstance.post("/payments/process", {
-        appointmentId: appointment.id,
-        amount: doctor?.consultationFee || 500.0,
-        paymentMethod: paymentMethod
+      // 2. Create order in Backend
+      const orderRes = await axiosInstance.post("/payments/create-order", {
+        appointmentId: appointment.id
       });
 
-      setTxnDetails(payRes.data);
-      toast.success("Payment successful & Booking confirmed!");
-      setStep("success");
+      const { orderId, amount, currency, keyId } = orderRes.data;
+
+      // 3. Configure Razorpay options
+      const options = {
+        key: keyId,
+        amount: amount,
+        currency: currency,
+        name: "Smart Health Care System",
+        description: `Consultation Fee - Dr. ${doctor?.name || "Doctor"}`,
+        order_id: orderId,
+        handler: async function (response) {
+          try {
+            setPaymentLoading(true);
+            const verifyRes = await axiosInstance.post("/payments/verify", {
+              appointmentId: appointment.id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature
+            });
+
+            setTxnDetails(verifyRes.data.payment);
+            toast.success("Payment successful & Booking confirmed!");
+            setStep("success");
+          } catch (verifyErr) {
+            toast.error(verifyErr.response?.data?.message || "Payment verification failed. Please contact support.");
+          } finally {
+            setPaymentLoading(false);
+          }
+        },
+        prefill: {
+          name: "",
+          email: "",
+          contact: ""
+        },
+        theme: {
+          color: "#2563EB"
+        },
+        modal: {
+          ondismiss: function () {
+            toast.warn("Payment checkout cancelled.");
+          }
+        }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
     } catch (err) {
-      toast.error(err.response?.data?.error || "Transaction failed! Please try again.");
+      toast.error(err.response?.data?.error || err.response?.data?.message || "Transaction failed! Please try again.");
     } finally {
       setPaymentLoading(false);
     }
@@ -204,10 +253,10 @@ const BookAppointment = () => {
             <div className="mb-6 flex justify-between items-center">
               <div>
                 <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">
-                  💳 Payment Gateway
+                  💳 Payment Checkout
                 </h2>
                 <p className="text-slate-400 text-sm mt-0.5">
-                  Secure sandbox transaction console
+                  Complete payment securely with Razorpay
                 </p>
               </div>
               <button
@@ -218,160 +267,66 @@ const BookAppointment = () => {
               </button>
             </div>
 
+            {/* Appointment Brief Summary */}
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 mb-6 space-y-3">
+              <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+                Appointment Details
+              </h3>
+              <div className="text-sm text-slate-700 space-y-1.5 leading-relaxed">
+                <p className="flex justify-between">
+                  <span>Doctor:</span> 
+                  <strong className="text-slate-800">Dr. {doctor?.name}</strong>
+                </p>
+                <p className="flex justify-between">
+                  <span>Specialization:</span> 
+                  <strong className="text-slate-800">{doctor?.specialization}</strong>
+                </p>
+                <p className="flex justify-between">
+                  <span>Date:</span> 
+                  <strong className="text-slate-800">{form.appointmentDate}</strong>
+                </p>
+                <p className="flex justify-between">
+                  <span>Time:</span> 
+                  <strong className="text-slate-800">{form.appointmentTime}</strong>
+                </p>
+              </div>
+            </div>
+
             {/* Price Detail */}
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4.5 mb-6">
+            <div className="bg-blue-50/30 border border-blue-100/50 rounded-2xl p-5 mb-6">
               <div className="flex justify-between items-center text-sm font-semibold text-slate-600">
-                <span>Doctor Consultation Fee:</span>
+                <span>Consultation Fee:</span>
                 <span className="text-slate-800 font-bold">Rs. {doctor?.consultationFee}</span>
               </div>
-              <div className="flex justify-between items-center text-sm font-semibold text-slate-600 mt-2 border-t border-slate-100 pt-2 text-blue-700 font-extrabold text-base">
+              <div className="flex justify-between items-center mt-3 border-t border-blue-100/50 pt-3 text-blue-700 font-extrabold text-lg">
                 <span>Total Amount Due:</span>
                 <span>Rs. {doctor?.consultationFee}</span>
               </div>
             </div>
 
-            {/* Payment Method Switcher */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <button
-                onClick={() => setPaymentMethod("UPI")}
-                className={`py-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition ${
-                  paymentMethod === "UPI"
-                    ? "border-blue-600 bg-blue-50/30 text-blue-600 font-extrabold"
-                    : "border-slate-200 text-slate-400 hover:text-slate-600 bg-white"
-                }`}
-              >
-                📱 UPI Payment
-              </button>
-              <button
-                onClick={() => setPaymentMethod("CARD")}
-                className={`py-3 rounded-xl border text-xs font-bold uppercase tracking-wider transition ${
-                  paymentMethod === "CARD"
-                    ? "border-blue-600 bg-blue-50/30 text-blue-600 font-extrabold"
-                    : "border-slate-200 text-slate-400 hover:text-slate-600 bg-white"
-                }`}
-              >
-                💳 Credit / Debit Card
-              </button>
+            {/* Secured by Razorpay Badge / Branding */}
+            <div className="flex justify-center items-center flex-col bg-slate-50 rounded-2xl p-5 border border-dashed border-slate-200 my-4 text-center">
+              <div className="text-3xl mb-2">🔒</div>
+              <h4 className="text-sm font-bold text-slate-700">100% Secured Payment Gateway</h4>
+              <p className="text-[10px] text-slate-400 mt-1 max-w-[240px] leading-relaxed">
+                You will be redirected to the secure Razorpay payment modal to complete the transaction.
+              </p>
+              <div className="mt-4 flex items-center gap-1 text-[11px] font-extrabold text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-full shadow-sm">
+                <span>Secured by</span>
+                <span className="text-blue-600 tracking-tight font-black uppercase text-[12px]">Razorpay</span>
+              </div>
             </div>
 
-            {/* Payment Method Details */}
-            {paymentMethod === "UPI" ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                    Enter UPI ID
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. patient@okaxis"
-                    value={upiId}
-                    onChange={(e) => setUpiId(e.target.value)}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-slate-700 font-medium"
-                    required
-                  />
-                </div>
-                <div className="flex justify-center items-center flex-col bg-slate-50 rounded-2xl p-5 border border-dashed border-slate-200 my-4">
-                  <div className="w-40 h-40 bg-white border border-slate-200 rounded-2xl flex items-center justify-center shadow-inner p-2.5 relative group overflow-hidden bg-gradient-to-tr from-white to-slate-50/50">
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(
-                        `upi://pay?pa=smarthealthcare@okaxis&pn=SmartHealthCare&am=${doctor?.consultationFee || 500.0}&cu=INR&tn=Consultation+Fee+Dr+${encodeURIComponent(doctor?.name || "Doctor")}`
-                      )}`} 
-                      alt="UPI QR Code" 
-                      className="w-full h-full object-contain rounded-xl transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "https://placehold.co/150x150?text=QR+Code";
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-3 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full border border-emerald-100/50 text-[10px] font-bold">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                    </span>
-                    Live UPI QR Generated
-                  </div>
-                  <p className="text-[9px] text-slate-400 mt-2 text-center max-w-[220px] leading-relaxed">
-                    Scan this QR code with any UPI app (GPay, PhonePe, Paytm) to simulate transfer of <strong>Rs. {doctor?.consultationFee || 500.0}</strong> dynamically.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3.5">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Card Number
-                  </label>
-                  <input
-                    type="text"
-                    name="number"
-                    maxLength={16}
-                    placeholder="1234567812345678"
-                    value={cardInfo.number}
-                    onChange={handleCardChange}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-slate-700 font-medium"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Cardholder Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="e.g. John Doe"
-                    value={cardInfo.name}
-                    onChange={handleCardChange}
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-slate-700 font-medium"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      Expiry Date
-                    </label>
-                    <input
-                      type="text"
-                      name="expiry"
-                      maxLength={5}
-                      placeholder="MM/YY"
-                      value={cardInfo.expiry}
-                      onChange={handleCardChange}
-                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-slate-700 font-medium"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      CVV / Security Code
-                    </label>
-                    <input
-                      type="password"
-                      name="cvv"
-                      maxLength={3}
-                      placeholder="•••"
-                      value={cardInfo.cvv}
-                      onChange={handleCardChange}
-                      className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 text-slate-700 font-medium"
-                      required
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
             <button
-              onClick={processSimulatedPayment}
+              onClick={processRazorpayPayment}
               disabled={paymentLoading}
-              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3.5 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-emerald-500/20 transition-all duration-200 mt-6 flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white py-3.5 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg shadow-blue-500/20 transition-all duration-200 mt-6 flex justify-center items-center gap-2 active:scale-95 disabled:opacity-50"
             >
               {paymentLoading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span>🔒 Pay Rs. {doctor?.consultationFee}</span>
+                  <span>Proceed to Pay Rs. {doctor?.consultationFee}</span>
                 </>
               )}
             </button>
@@ -389,7 +344,7 @@ const BookAppointment = () => {
               Booking & Payment Confirmed!
             </h2>
             <p className="text-slate-400 text-xs mt-1">
-              Simulated Transaction Ledger verified successfully
+              Transaction processed and verified securely by Razorpay
             </p>
 
             {/* Receipt Summary */}
@@ -403,7 +358,7 @@ const BookAppointment = () => {
                 <p className="flex justify-between"><span>Doctor:</span> <strong className="text-slate-700 font-semibold">Dr. {doctor?.name}</strong></p>
                 <p className="flex justify-between"><span>Date:</span> <strong className="text-slate-700 font-semibold">{form.appointmentDate}</strong></p>
                 <p className="flex justify-between"><span>Time:</span> <strong className="text-slate-700 font-semibold">{form.appointmentTime}</strong></p>
-                <p className="flex justify-between"><span>Method:</span> <strong className="text-slate-700 font-semibold uppercase">{paymentMethod}</strong></p>
+                <p className="flex justify-between"><span>Method:</span> <strong className="text-slate-700 font-semibold uppercase">{txnDetails?.paymentMethod || "RAZORPAY"}</strong></p>
                 <p className="flex justify-between"><span>Amount:</span> <strong className="text-slate-800 font-bold">Rs. {doctor?.consultationFee}</strong></p>
                 <p className="flex justify-between border-t border-slate-50 pt-2 text-[11px]">
                   <span>Transaction ID:</span> 

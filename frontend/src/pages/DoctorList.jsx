@@ -116,7 +116,7 @@ const DoctorList = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="space-y-2.5 text-sm text-slate-500 mb-6 border-t border-slate-50 pt-4 flex-1">
                 <p className="flex items-center gap-2">🎓 <span className="font-semibold text-slate-700">{doctor.qualification}</span></p>
                 <p className="flex items-center gap-2">⏱ <span>{doctor.experienceYears} years experience</span></p>
