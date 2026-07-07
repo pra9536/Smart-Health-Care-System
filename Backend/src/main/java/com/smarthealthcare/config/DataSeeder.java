@@ -27,10 +27,10 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void seedDoctors() {
-        if (doctorRepository.count() == 0) {
-            String defaultPassword = passwordEncoder.encode("password123");
+        String defaultPassword = passwordEncoder.encode("password123");
 
-            // Doctor 1
+        // Doctor 1
+        if (!userRepository.existsByEmail("doctor1@smarthealthcare.com")) {
             User user1 = new User();
             user1.setName("Dr. Prateek Yadav");
             user1.setEmail("doctor1@smarthealthcare.com");
@@ -51,8 +51,10 @@ public class DataSeeder implements CommandLineRunner {
             doc1.setUser(user1);
             doc1.setActive(true);
             doctorRepository.save(doc1);
+        }
 
-            // Doctor 2
+        // Doctor 2
+        if (!userRepository.existsByEmail("doctor2@smarthealthcare.com")) {
             User user2 = new User();
             user2.setName("Dr. Shalini Sharma");
             user2.setEmail("doctor2@smarthealthcare.com");
@@ -73,8 +75,10 @@ public class DataSeeder implements CommandLineRunner {
             doc2.setUser(user2);
             doc2.setActive(true);
             doctorRepository.save(doc2);
+        }
 
-            // Doctor 3
+        // Doctor 3
+        if (!userRepository.existsByEmail("doctor3@smarthealthcare.com")) {
             User user3 = new User();
             user3.setName("Dr. Amit Verma");
             user3.setEmail("doctor3@smarthealthcare.com");
@@ -95,8 +99,10 @@ public class DataSeeder implements CommandLineRunner {
             doc3.setUser(user3);
             doc3.setActive(true);
             doctorRepository.save(doc3);
+        }
 
-            // Doctor 4
+        // Doctor 4
+        if (!userRepository.existsByEmail("doctor4@smarthealthcare.com")) {
             User user4 = new User();
             user4.setName("Dr. Rajesh Gupta");
             user4.setEmail("doctor4@smarthealthcare.com");
@@ -117,16 +123,14 @@ public class DataSeeder implements CommandLineRunner {
             doc4.setUser(user4);
             doc4.setActive(true);
             doctorRepository.save(doc4);
-
-            System.out.println("Sample Doctor records seeded successfully.");
         }
     }
 
     private void seedPatients() {
-        if (patientRepository.count() == 0) {
-            String defaultPassword = passwordEncoder.encode("password123");
+        String defaultPassword = passwordEncoder.encode("password123");
 
-            // Patient 1
+        // Patient 1
+        if (!userRepository.existsByEmail("patient1@smarthealthcare.com")) {
             User user1 = new User();
             user1.setName("Ramesh Kumar");
             user1.setEmail("patient1@smarthealthcare.com");
@@ -145,8 +149,10 @@ public class DataSeeder implements CommandLineRunner {
             pat1.setBloodGroup("O+");
             pat1.setUser(user1);
             patientRepository.save(pat1);
+        }
 
-            // Patient 2
+        // Patient 2
+        if (!userRepository.existsByEmail("patient2@smarthealthcare.com")) {
             User user2 = new User();
             user2.setName("Sunita Devi");
             user2.setEmail("patient2@smarthealthcare.com");
@@ -165,8 +171,6 @@ public class DataSeeder implements CommandLineRunner {
             pat2.setBloodGroup("A+");
             pat2.setUser(user2);
             patientRepository.save(pat2);
-
-            System.out.println("Sample Patient records seeded successfully.");
         }
     }
 }
