@@ -145,8 +145,13 @@ const BookAppointment = () => {
           color: "#2563EB"
         },
         modal: {
-          ondismiss: function () {
+          ondismiss: async function () {
             toast.warn("Payment checkout cancelled.");
+            try {
+              await axiosInstance.put(`/appointments/${appointment.id}/cancel`);
+            } catch (err) {
+              console.error("Failed to auto-cancel appointment:", err);
+            }
           }
         }
       };
