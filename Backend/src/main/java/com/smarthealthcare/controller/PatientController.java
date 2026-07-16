@@ -2,9 +2,7 @@ package com.smarthealthcare.controller;
 
 
 import com.smarthealthcare.entity.Patient;
-import com.smarthealthcare.entity.User;
-import com.smarthealthcare.repository.PatientRepository;
-import com.smarthealthcare.repository.UserRepository;
+import com.smarthealthcare.service.PatientService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,19 +18,13 @@ import java.util.List;
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 public class PatientController {
 
-    private final PatientRepository patientRepository;
-    private final UserRepository userRepository;
+    private final PatientService patientService;
 
     @GetMapping("/me")
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<?> getMyProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not Found"));
-
-        Patient patient = patientRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Patient profile not found"));
-
+        Patient patient = patientService.getPatientProfile(userDetails.getUsername());
         return ResponseEntity.ok(patient);
     }
 
@@ -41,11 +33,7 @@ public class PatientController {
     public ResponseEntity<?> createProfile(
             @RequestBody Patient patient,
             @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        patient.setUser(user);
-        Patient saved = patientRepository.save(patient);
+        Patient saved = patientService.createProfile(patient, userDetails.getUsername());
         return ResponseEntity.ok(saved);
     }
 
@@ -54,26 +42,14 @@ public class PatientController {
     public ResponseEntity<?> updateProfile(
             @RequestBody Patient updatePatient,
             @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        Patient existing = patientRepository.findByUser(user)
-                .orElseThrow(() -> new RuntimeException("Patient profile not found"));
-
-        existing.setName(updatePatient.getName());
-        existing.setAge(updatePatient.getAge());
-        existing.setGender(updatePatient.getGender());
-        existing.setPhone(updatePatient.getPhone());
-        existing.setAddress(updatePatient.getAddress());
-        existing.setBloodGroup(updatePatient.getBloodGroup());
-
-        return ResponseEntity.ok(patientRepository.save(existing));
+        Patient updated = patientService.updateProfile(updatePatient, userDetails.getUsername());
+        return ResponseEntity.ok(updated);
     }
 
     @GetMapping
     @PreAuthorize("hasRole('DOCTOR') or hasRole('ADMIN')")
     public ResponseEntity<List<Patient>> getAllPatients() {
-
-        return ResponseEntity.ok(patientRepository.findAll());
+        return ResponseEntity.ok(patientService.getAllPatients());
     }
 }
+

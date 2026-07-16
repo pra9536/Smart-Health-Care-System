@@ -6,16 +6,16 @@ import axiosInstance from "../api/axiosInstance";
 const BookAppointment = () => {
   const { doctorId } = useParams();
   const navigate = useNavigate();
-  
+
   const [doctor, setDoctor] = useState(null);
   const [loadingDoc, setLoadingDoc] = useState(true);
-  
+
   const [form, setForm] = useState({
     appointmentDate: "",
     appointmentTime: "",
     symptoms: ""
   });
-  
+
   const [step, setStep] = useState("booking"); // "booking", "checkout", "success"
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [upiId, setUpiId] = useState("");
@@ -145,13 +145,8 @@ const BookAppointment = () => {
           color: "#2563EB"
         },
         modal: {
-          ondismiss: async function () {
+          ondismiss: function () {
             toast.warn("Payment checkout cancelled.");
-            try {
-              await axiosInstance.put(`/appointments/${appointment.id}/cancel`);
-            } catch (err) {
-              console.error("Failed to auto-cancel appointment:", err);
-            }
           }
         }
       };
@@ -176,7 +171,7 @@ const BookAppointment = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
       <div className="bg-white rounded-3xl shadow-xl border border-slate-100 w-full max-w-lg overflow-hidden transition-all duration-300">
-        
+
         {/* Booking Form Step */}
         {step === "booking" && (
           <div className="p-8">
@@ -279,19 +274,19 @@ const BookAppointment = () => {
               </h3>
               <div className="text-sm text-slate-700 space-y-1.5 leading-relaxed">
                 <p className="flex justify-between">
-                  <span>Doctor:</span> 
+                  <span>Doctor:</span>
                   <strong className="text-slate-800">Dr. {doctor?.name}</strong>
                 </p>
                 <p className="flex justify-between">
-                  <span>Specialization:</span> 
+                  <span>Specialization:</span>
                   <strong className="text-slate-800">{doctor?.specialization}</strong>
                 </p>
                 <p className="flex justify-between">
-                  <span>Date:</span> 
+                  <span>Date:</span>
                   <strong className="text-slate-800">{form.appointmentDate}</strong>
                 </p>
                 <p className="flex justify-between">
-                  <span>Time:</span> 
+                  <span>Time:</span>
                   <strong className="text-slate-800">{form.appointmentTime}</strong>
                 </p>
               </div>
@@ -344,7 +339,7 @@ const BookAppointment = () => {
             <div className="w-16 h-16 bg-emerald-50 text-emerald-500 border border-emerald-100 rounded-full flex items-center justify-center text-3xl mx-auto shadow-inner mb-4 animate-bounce">
               ✓
             </div>
-            
+
             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">
               Booking & Payment Confirmed!
             </h2>
@@ -358,7 +353,7 @@ const BookAppointment = () => {
                 <span>Receipt Logs</span>
                 <span className="text-emerald-500">PAID</span>
               </h3>
-              
+
               <div className="text-xs text-slate-500 space-y-2 leading-relaxed">
                 <p className="flex justify-between"><span>Doctor:</span> <strong className="text-slate-700 font-semibold">Dr. {doctor?.name}</strong></p>
                 <p className="flex justify-between"><span>Date:</span> <strong className="text-slate-700 font-semibold">{form.appointmentDate}</strong></p>
@@ -366,7 +361,7 @@ const BookAppointment = () => {
                 <p className="flex justify-between"><span>Method:</span> <strong className="text-slate-700 font-semibold uppercase">{txnDetails?.paymentMethod || "RAZORPAY"}</strong></p>
                 <p className="flex justify-between"><span>Amount:</span> <strong className="text-slate-800 font-bold">Rs. {doctor?.consultationFee}</strong></p>
                 <p className="flex justify-between border-t border-slate-50 pt-2 text-[11px]">
-                  <span>Transaction ID:</span> 
+                  <span>Transaction ID:</span>
                   <strong className="text-indigo-600 font-extrabold font-mono tracking-wider">{txnDetails?.transactionId}</strong>
                 </p>
               </div>

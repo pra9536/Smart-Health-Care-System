@@ -3,8 +3,7 @@ package com.smarthealthcare.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smarthealthcare.entity.Patient;
 import com.smarthealthcare.entity.User;
-import com.smarthealthcare.repository.PatientRepository;
-import com.smarthealthcare.repository.UserRepository;
+import com.smarthealthcare.service.PatientService;
 import com.smarthealthcare.security.JwtUtil;
 import com.smarthealthcare.security.CustomerUserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,9 +20,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -41,10 +40,7 @@ public class PatientControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private PatientRepository patientRepository;
-
-    @MockitoBean
-    private UserRepository userRepository;
+    private PatientService patientService;
 
     @MockitoBean
     private JwtUtil jwtUtil;
@@ -82,8 +78,7 @@ public class PatientControllerTest {
     @Test
     @WithMockUser(username = "smith@example.com", roles = "PATIENT")
     void testGetMyProfileSuccess() throws Exception {
-        when(userRepository.findByEmail("smith@example.com")).thenReturn(Optional.of(testUser));
-        when(patientRepository.findByUser(testUser)).thenReturn(Optional.of(testPatient));
+        when(patientService.getPatientProfile("smith@example.com")).thenReturn(testPatient);
 
         mockMvc.perform(get("/api/patients/me"))
                 .andExpect(status().isOk())
@@ -95,8 +90,7 @@ public class PatientControllerTest {
     @Test
     @WithMockUser(username = "smith@example.com", roles = "PATIENT")
     void testCreateProfileSuccess() throws Exception {
-        when(userRepository.findByEmail("smith@example.com")).thenReturn(Optional.of(testUser));
-        when(patientRepository.save(any(Patient.class))).thenReturn(testPatient);
+        when(patientService.createProfile(any(Patient.class), eq("smith@example.com"))).thenReturn(testPatient);
 
         mockMvc.perform(post("/api/patients/profile")
                         .with(csrf())
@@ -109,9 +103,7 @@ public class PatientControllerTest {
     @Test
     @WithMockUser(username = "smith@example.com", roles = "PATIENT")
     void testUpdateProfileSuccess() throws Exception {
-        when(userRepository.findByEmail("smith@example.com")).thenReturn(Optional.of(testUser));
-        when(patientRepository.findByUser(testUser)).thenReturn(Optional.of(testPatient));
-        when(patientRepository.save(any(Patient.class))).thenReturn(testPatient);
+        when(patientService.updateProfile(any(Patient.class), eq("smith@example.com"))).thenReturn(testPatient);
 
         mockMvc.perform(put("/api/patients/profile")
                         .with(csrf())
@@ -126,7 +118,7 @@ public class PatientControllerTest {
     @WithMockUser(roles = "DOCTOR")
     void testGetAllPatientsDoctorSuccess() throws Exception {
         List<Patient> patients = Collections.singletonList(testPatient);
-        when(patientRepository.findAll()).thenReturn(patients);
+        when(patientService.getAllPatients()).thenReturn(patients);
 
         mockMvc.perform(get("/api/patients"))
                 .andExpect(status().isOk())
@@ -140,3 +132,4 @@ public class PatientControllerTest {
                 .andExpect(status().isForbidden());
     }
 }
+
