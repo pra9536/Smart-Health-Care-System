@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DoctorService {
 
-    private final DoctorRepository doctorRepository;
+    private final DoctorRepository doctorRepository; 
     private final UserRepository userRepository;
     private final AuditService auditService;
 
