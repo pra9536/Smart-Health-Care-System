@@ -109,21 +109,4 @@ public class DoctorController {
         doctorService.deleteDoctor(id);
         return ResponseEntity.ok().body("Doctor deleted successfully!");
     }
-
-
-    // TEMPORARY DEBUG — delete after fixing
-    @GetMapping("/debug")
-    public ResponseEntity<?> debug(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new RuntimeException("not found"));
-
-        return ResponseEntity.ok(Map.of(
-                "userId", user.getId(),
-                "email", user.getEmail(),
-                "doctor", doctorRepository.findByUserId(user.getId())
-                        .map(d -> Map.of("id", d.getId(), "name", d.getName()))
-                        .orElse(null)
-        ));
-    }
 }
