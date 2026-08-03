@@ -11,6 +11,6 @@ public class AppointmentRequest {
     private Long doctorId;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
-    private String symtoms;
+    private String symptoms;
 
 }

@@ -97,7 +97,7 @@ public class AppointmentControllerTest {
         request.setDoctorId(5L);
         request.setAppointmentDate(LocalDate.now().plusDays(2));
         request.setAppointmentTime(LocalTime.of(10, 0));
-        request.setSymtoms("Fever and cough");
+        request.setSymptoms("Fever and cough");
 
         when(userRepository.findByEmail("jane@example.com")).thenReturn(Optional.of(testUser));
         when(patientRepository.findByUser(testUser)).thenReturn(Optional.of(testPatient));

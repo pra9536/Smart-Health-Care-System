@@ -1,12 +1,10 @@
 package com.smarthealthcare.service;
 
-
 import com.smarthealthcare.dto.AppointmentRequest;
 import com.smarthealthcare.entity.Appointment;
 import com.smarthealthcare.entity.Doctor;
 import com.smarthealthcare.entity.Patient;
 import com.smarthealthcare.repository.AppointmentRepository;
-import com.smarthealthcare.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -24,8 +22,6 @@ public class AppointmentService {
 
     private final EmailService emailService;
 
-    private final UserRepository userRepository;
-
     public boolean isSlotBooked(Long doctorId, String date, String time) {
         Doctor doctor = doctorService.getDoctorById(doctorId);
         LocalDate localDate = LocalDate.parse(date);
@@ -34,22 +30,21 @@ public class AppointmentService {
                 doctor,
                 localDate,
                 localTime,
-                Appointment.Status.CANCELLED
-        );
+                Appointment.Status.CANCELLED);
     }
 
-    public Appointment bookAppointment(AppointmentRequest request, Patient patient){
+    public Appointment bookAppointment(AppointmentRequest request, Patient patient) {
         Doctor doctor = doctorService.getDoctorById(request.getDoctorId());
 
         boolean isAlreadyBooked = appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusNot(
                 doctor,
                 request.getAppointmentDate(),
                 request.getAppointmentTime(),
-                Appointment.Status.CANCELLED
-        );
+                Appointment.Status.CANCELLED);
 
         if (isAlreadyBooked) {
-            throw new RuntimeException("This slot is already booked for this doctor. Please choose a different date or time.");
+            throw new RuntimeException(
+                    "This slot is already booked for this doctor. Please choose a different date or time.");
         }
 
         Appointment appointment = new Appointment();
@@ -58,27 +53,26 @@ public class AppointmentService {
         appointment.setDoctor(doctor);
         appointment.setAppointmentDate(request.getAppointmentDate());
         appointment.setAppointmentTime(request.getAppointmentTime());
-        appointment.setSymptoms(request.getSymtoms());
+        appointment.setSymptoms(request.getSymptoms());
         appointment.setStatus(Appointment.Status.PENDING);
 
         Appointment saved = appointmentRepository.save(appointment);
 
-        try{
+        try {
             String patientEmail = patient.getUser().getEmail();
             emailService.sendAppointmentConfirmation(
                     patientEmail,
                     patient.getName(),
                     doctor.getName(),
                     request.getAppointmentDate().toString(),
-                    request.getAppointmentTime().toString()
-            );
+                    request.getAppointmentTime().toString());
         } catch (Exception e) {
             System.out.println("Email failed: " + e.getMessage());
         }
         return saved;
     }
 
-    public Appointment updateStatus(Long id, String status){
+    public Appointment updateStatus(Long id, String status) {
         Appointment appointment = appointmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found"));
 
@@ -86,7 +80,7 @@ public class AppointmentService {
 
         Appointment updated = appointmentRepository.save(appointment);
 
-        try{
+        try {
             String patientEmail = appointment.getPatient()
                     .getUser()
                     .getEmail();
@@ -95,8 +89,7 @@ public class AppointmentService {
                     appointment.getPatient().getName(),
                     appointment.getDoctor().getName(),
                     status,
-                    appointment.getAppointmentDate().toString()
-            );
+                    appointment.getAppointmentDate().toString());
         } catch (Exception e) {
             System.out.println("Email failed: " + e.getMessage());
         }
@@ -104,7 +97,7 @@ public class AppointmentService {
         return updated;
     }
 
-    public List<Appointment> getAppointmentsByPatient(Patient patient){
+    public List<Appointment> getAppointmentsByPatient(Patient patient) {
         return appointmentRepository.findByPatient(patient);
     }
 
